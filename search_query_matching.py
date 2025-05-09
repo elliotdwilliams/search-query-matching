@@ -1,6 +1,5 @@
 import sys
 import csv
-import re
 import string
 
 
@@ -22,48 +21,40 @@ def remove_stopwords(word_list, stop_words):
     return new_word_list
 
 
+def read_csv(filename):
+    """Open CSV file and read data into list"""
+    data = []
+    with open(filename, 'r') as file:
+        csv_file = csv.reader(file)
+        for row in csv_file:
+            data.append(row)
+    file.close()
+    return data
+
+
 def match_terms(query_words, toc):
     """Check to see if all words in query_words are found in the table of contents"""
-    if all(x in toc for x in query_words):
-        return True
-    else:
-        return False
+    return bool(all(x in toc for x in query_words))
 
 
 def main():
 
     # Define files based on command line input
-    QUERY_FILE = sys.argv[1]
-    TOC_FILE = sys.argv[2]
-    
+    query_file = sys.argv[1]
+    toc_file = sys.argv[2]
+
     # Open stop_words.txt file and add list of stop words to a list
     with open('stop_words.txt', 'r') as sw_file:
         data = sw_file.read()
-        STOP_WORDS = data.split('\n')
+        stop_words = data.split('\n')
 
-    # Create empty list to hold table of contents data
-    toc_data = []
-
-    # Open TOC file and add data to toc_data
-    with open(TOC_FILE, 'r') as toc_csv:
-        csvFile = csv.reader(toc_csv)
-        for row in csvFile:
-            toc_data.append(row)
-    toc_csv.close()
+    # Get data from TOC and query files
+    toc_data = read_csv(toc_file)
+    query_data = read_csv(query_file)
 
     # Normalize the text in the table of contents
     for item in toc_data:
         item[1] = normalize_string(item[1])
-
-    # Create empty list to hold query data
-    query_data = []
-
-    # Open query file and add data to query_data
-    with open(QUERY_FILE, 'r') as query_csv:
-        csvFile = csv.reader(query_csv)
-        for row in csvFile:
-            query_data.append(row)
-    query_csv.close()
 
     # Iterate through each search query
     for query in query_data:
@@ -77,14 +68,16 @@ def main():
         query_words = query_string.split()
 
         # Remove stop words from query word list
-        query_words = remove_stopwords(query_words, STOP_WORDS)
+        query_words = remove_stopwords(query_words, stop_words)
         print(query_words)
 
         # Iterate through each table of contents, and see if all words in query are found in that TOC
         for item in toc_data:
-            terms_found = match_terms(query_words, item[1])
+            toc_id = item[0]
+            toc_content = item[1]
+            terms_found = match_terms(query_words, toc_content)
             if terms_found:
-                print(item[0])
+                print(toc_id)
 
             # if all(x in item[1] for x in query_words):
             #     print(item[0])
