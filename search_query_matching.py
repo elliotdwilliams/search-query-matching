@@ -42,9 +42,9 @@ def read_csv(filename):
     return data
 
 
-def match_terms(query_words, toc):
+def match_terms(query_words, toc_words):
     """Check to see if all words in query_words are found in the table of contents"""
-    return bool(all(x in toc for x in query_words))
+    return bool(all(x in toc_words for x in query_words))
 
 
 def main():
@@ -90,8 +90,10 @@ def main():
         # Iterate through each table of contents, and see if all words in query are found in that TOC
         for item in toc_data:
             toc_id = item[0]
-            toc_content = item[1]
-            terms_found = match_terms(query_words, toc_content)
+            # Split TOC into individual words, so that matching will happen on whole words
+            toc_words = item[1].split()
+
+            terms_found = match_terms(query_words, toc_words)
             if terms_found:
                 result = (query_id, query_string, toc_id)
                 print(toc_id)
