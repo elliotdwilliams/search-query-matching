@@ -34,7 +34,7 @@ def remove_stop_words(word_list, stop_words):
 def read_csv(filename):
     """Open CSV file and read data into list"""
     data = []
-    with open(filename, 'r', encoding='utf-8') as file:
+    with open(filename, 'r', encoding='utf-8-sig') as file:
         csv_file = csv.reader(file)
         for row in csv_file:
             data.append(row)
@@ -85,7 +85,7 @@ def main():
         try:
             print(query_id + ' ' + str(query_words))
         except UnicodeEncodeError:
-            print(query_id + ' (encoding error)')
+            print('(ENCODING ERROR)')
 
         # Iterate through each table of contents, and see if all words in query are found in that TOC
         for item in toc_data:
