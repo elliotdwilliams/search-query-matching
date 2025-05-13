@@ -1,9 +1,9 @@
 """Compares a list of search queries to a list of table of contents (TOC) notes.
 
-Accepts two filenames as command line arguments: 1) A list of search queries, with the first
+Accepts two CSV files as command line arguments: 1) A list of search queries, with the first
 item in the row being an identifier and the second item being the text of the search query, and
 2) A list of table of contents notes, again with the first item in the row being an identifier
-(e.g. MMS ID) and the second item being the TOC. Output is a txt file, with the search query ID
+(e.g. MMS ID) and the second item being the TOC. Output is a CSV file, with the search query ID
 and search string, followed by the identifier of any records whose TOC matched that query.
 """
 
@@ -52,7 +52,7 @@ def main():
     # Define files based on command line input
     query_file = sys.argv[1]
     toc_file = sys.argv[2]
-    output_file = os.path.splitext(query_file)[0] + '_results.txt'
+    output_file = os.path.splitext(query_file)[0] + '_results.csv'
 
     # Open stop_words.txt file and add list of stop words to a list
     with open('stop_words.txt', 'r') as sw_file:
@@ -105,8 +105,8 @@ def main():
             toc_id = item[2]
 
             # Print subject code and count, separated by a tab
-            f.write(query_id + '\t' + query_string + '\t' + toc_id + '\n')
-            print(query_id + '\t' + query_string + '\t' + toc_id)
+            f.write(query_id + ',' + query_string + ',' + toc_id + '\n')
+            print(query_id + ',' + query_string + ',' + toc_id)
     f.close()
 
 if __name__ == '__main__':
