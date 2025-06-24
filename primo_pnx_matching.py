@@ -5,6 +5,17 @@ identify if those records are in the query search results. Then, if the record
 is found, analyzes the PNX display fields to identify which fields match the
 query terms.
 
+Expects two command line arguments:
+    1) Query file - CSV file with the following entries: query ID, query string,
+    Primo tab, Primo view
+    2) MMS ID file - CSV file with one MMS ID per line
+
+Output filename is based on the query file name, with "_search_matches" appended.
+    - CSV file with the following entries: query ID, query string, MMS ID of matching
+    record, list of PNX field names
+    
+This script requires a credentials.py file with a Primo API key.
+
 Created on Tues Jun 3 2025
 
 @author: Elliot Williams
@@ -36,6 +47,7 @@ def primo_search_call(query_string, query_tab, query_vid):
     """"Execute query using the Primo Search API"""
 
     # Get scope based on tab value
+    # (These values need to be customized per Primo site.)
     if query_tab == 'Everything':
         query_scope = 'MyInst_and_CI'
     elif query_tab == 'LibraryCatalog':
@@ -46,7 +58,7 @@ def primo_search_call(query_string, query_tab, query_vid):
         query_scope = 'CourseReserves'
     # If tab does not match any of those values, quit this function and do not make an API call
     else:
-        return
+        return None
 
     # Set API URL and parameters
     primo_api = BASE_URL + 'primo/v1/search'
@@ -76,9 +88,7 @@ def primo_search_call(query_string, query_tab, query_vid):
         response.raise_for_status()
     except requests.exceptions.ReadTimeout:
         print('Request timed out.')
-        return
-
-    # print(response.url)
+        return None
 
     # Return API response formatted as JSON
     return response.json()
@@ -108,17 +118,25 @@ def pnx_field_match(item, query_string):
     return matching_fields
 
 
+def create_output(output_file, results):
+    """Print results to CSV file"""
+
+    with open(output_file, 'w', encoding='utf-8', newline='') as f:
+        write = csv.writer(f)
+        write.writerows(results)
+
+    f.close()
+
+
 def main():
     """Main function: opens files, gets data, makes API queries, and returns results."""
 
-    # Define files based on command line input
-    query_file = sys.argv[1]
-    mmsid_file = sys.argv[2]
-    output_file = os.path.splitext(query_file)[0] + '_search_matches.csv'
+    # Get data from files based on command line input
+    query_data = read_csv(sys.argv[1])
+    mmsid_data = read_csv(sys.argv[2])
 
-    # Get data from TOC and query files
-    mmsid_data = read_csv(mmsid_file)
-    query_data = read_csv(query_file)
+    # Define output file name, based on query file
+    output_file = os.path.splitext(sys.argv[1])[0] + '_search_matches.csv'
 
     # Convert MMS IDs from lists to strings
     mms_ids = []
@@ -148,8 +166,7 @@ def main():
 
         # Count the total number of results from the API;
         # helpful for confirming that API works as expected
-        api_results_count = primo_response['info']['total']
-        print(api_results_count)
+        print('Results: ' + str(primo_response['info']['total']))
 
         # Loop through items in query response
         for item in primo_response['docs']:
@@ -169,12 +186,7 @@ def main():
                 result = [query_id, query_string, item_mms, matching_fields]
                 results.append(result)
 
-    # Open output file and print results
-    with open(output_file, 'w', encoding='utf-8', newline='') as f:
-        write = csv.writer(f)
-        write.writerows(results)
-
-    f.close()
+    create_output(output_file, results)
 
 
 if __name__ == '__main__':
